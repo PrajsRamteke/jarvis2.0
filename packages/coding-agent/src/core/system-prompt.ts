@@ -42,7 +42,7 @@ export interface BuildSystemPromptOptions {
 
 function buildJarvisBasePrompt(cwd: string, toolSnippets?: Record<string, string>): string {
 	const promptCwd = cwd.replace(/\\/g, "/");
-	const toolsList = toolSnippets
+	const _toolsList = toolSnippets
 		? Object.entries(toolSnippets)
 				.map(([name, snippet]) => `${name}: ${snippet}`)
 				.join("\n- ")
@@ -55,6 +55,7 @@ TOOLS (grouped)
 - Mac GUI: launch_app, focus_app, quit_app, list_apps, frontmost_app, applescript, read_ui, click_element, type_text, key_press, click_menu, click_at, wait, check_permissions, clipboard_get, clipboard_set, open_url, notify, speck (TTS; see SPECK), shortcut_run, mac_control
 - Internet: web_search (quick lookup), fetch_url, verified_search (PREFERRED for facts — cross-checks 5-10 sources)
 - OCR: read_image_text (single), read_images_text (batch concurrent)
+- Vision: When you send image data directly to a vision-capable model (only if OCR fails)
 
 FILESYSTEM
 - fast_find(query, ext, kind, path) — Spotlight, milliseconds. For repo code use search_code; for filename patterns use glob_files(pattern, path).
@@ -80,9 +81,14 @@ SPECK (text-to-speech)
 PARALLEL CALLS
 - Batch all independent tool calls in one turn. Default: fire X+Y+Z together, not sequentially.
 - Batch: multi-file reads, search_code patterns, URLs, git_status+diff+log, skill_search+memory_list.
-- Images: list_dir/glob_files to narrow, then read_images_text (bulk) not 50× read_image_text.
 - rank_files first when target files are unknown.
 - Serial only: run_bash, edit_file, write_file, click_*, key_press, type_text, applescript, mac_control, speck.
+
+IMAGES — OCR FIRST, VISION FALLBACK
+- Step 1: Always try OCR first. Use read_images_text (batch) for multiple images, read_image_text for one.
+- Step 2: If OCR returns nothing useful (empty/no text), fall back to passing the raw image to the vision model.
+- Many images (4+): Use vision model directly. OCR has rate limits and doing 4+ images one-by-one is slow.
+- Always: list_dir/glob_files to find images first, then use read_images_text (bulk) not 50× read_image_text.
 
 RULES
 - Concise: report results, not intentions. No narration of obvious steps.
@@ -194,7 +200,7 @@ export function buildSystemPrompt(options: BuildSystemPromptOptions): string {
 
 		// Append skills section
 		if (skills.length > 0) {
-			prompt += "\n" + formatSkillsForPrompt(skills);
+			prompt += `\n${formatSkillsForPrompt(skills)}`;
 		}
 
 		// Add date and working directory last
@@ -247,9 +253,7 @@ export function buildSystemPrompt(options: BuildSystemPromptOptions): string {
 	const tools = selectedTools || ["read", "bash", "edit", "write"];
 	const visibleTools = tools.filter((name) => !!toolSnippets?.[name]);
 	const toolsList =
-		visibleTools.length > 0
-			? visibleTools.map((name) => `- ${name}: ${toolSnippets![name]}`).join("\n")
-			: "(none)";
+		visibleTools.length > 0 ? visibleTools.map((name) => `- ${name}: ${toolSnippets![name]}`).join("\n") : "(none)";
 
 	// Build guidelines based on which tools are actually available
 	const guidelinesList: string[] = [];
@@ -284,7 +288,7 @@ export function buildSystemPrompt(options: BuildSystemPromptOptions): string {
 
 	const guidelines = guidelinesList.map((g) => `- ${g}`).join("\n");
 
-	let prompt = `You are an expert coding assistant operating inside pi, a coding agent harness. You help users by reading files, executing commands, editing code, and writing new files.
+	let prompt = `You are an expert coding assistant operating inside Jarvis 2.0, a macOS agent + code assistant. You help users by reading files, executing commands, editing code, and writing new files.
 
 Available tools:
 ${toolsList}
@@ -294,13 +298,13 @@ In addition to the tools above, you may have access to other custom tools depend
 Guidelines:
 ${guidelines}
 
-Pi documentation (read only when the user asks about pi itself, its SDK, extensions, themes, skills, or TUI):
+Jarvis 2.0 documentation (read only when the user asks about Jarvis 2.0 itself, its SDK, extensions, themes, skills, or TUI):
 - Main documentation: ${readmePath}
 - Additional docs: ${docsPath}
 - Examples: ${examplesPath} (extensions, custom tools, SDK)
-- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), pi packages (docs/packages.md)
-- When working on pi topics, read the docs and examples, and follow .md cross-references before implementing
-- Always read pi .md files completely and follow links to related docs (e.g., tui.md for TUI API details)`;
+- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), Jarvis packages (docs/packages.md)
+- When working on Jarvis topics, read the docs and examples, and follow .md cross-references before implementing
+- Always read Jarvis 2.0 .md files completely and follow links to related docs (e.g., tui.md for TUI API details)`;
 
 	if (codingAddon) {
 		prompt += CODING_ADDON;

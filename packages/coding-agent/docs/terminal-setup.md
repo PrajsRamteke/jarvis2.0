@@ -14,7 +14,7 @@ Add to your Ghostty config (`~/Library/Application Support/com.mitchellh.ghostty
 keybind = alt+backspace=text:\x1b\x7f
 ```
 
-Older Claude Code versions may have added this Ghostty mapping:
+Some coding agents may have added this Ghostty mapping:
 
 ```
 keybind = shift+enter=text:\n
@@ -22,7 +22,7 @@ keybind = shift+enter=text:\n
 
 That mapping sends a raw linefeed byte. Inside pi, that is indistinguishable from `Ctrl+J`, so tmux and pi no longer see a real `shift+enter` key event.
 
-If Claude Code 2.x or newer is the only reason you added that mapping, you can remove it, unless you want to use Claude Code in tmux, where it still requires that Ghostty mapping.
+If that Ghostty mapping was only added for a specific agent, you can remove it.
 
 If you want `Shift+Enter` to keep working in tmux via that remap, add `ctrl+j` to your pi `newLine` keybinding in `~/.pi/agent/keybindings.json`:
 

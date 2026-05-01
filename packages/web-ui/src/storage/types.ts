@@ -1,5 +1,5 @@
-import type { AgentMessage, ThinkingLevel } from "@mariozechner/pi-agent-core";
-import type { Model } from "@mariozechner/pi-ai";
+import type { AgentMessage, ThinkingLevel } from "@prajwal/jarvis-agent";
+import type { Model } from "@prajwal/jarvis-ai";
 
 /**
  * Transaction interface for atomic operations across stores.

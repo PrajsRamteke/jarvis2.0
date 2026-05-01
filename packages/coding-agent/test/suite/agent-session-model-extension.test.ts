@@ -1,5 +1,5 @@
-import type { AgentTool, ThinkingLevel } from "@mariozechner/pi-agent-core";
-import { fauxAssistantMessage, fauxToolCall, type Model } from "@mariozechner/pi-ai";
+import type { AgentTool, ThinkingLevel } from "@prajwal/jarvis-agent";
+import { fauxAssistantMessage, fauxToolCall, type Model } from "@prajwal/jarvis-ai";
 import { Type } from "typebox";
 import { afterEach, describe, expect, it } from "vitest";
 import type { ExtensionAPI } from "../../src/index.js";

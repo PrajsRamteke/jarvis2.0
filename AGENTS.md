@@ -26,8 +26,8 @@
 - Run tests from the package root, not the repo root.
 - If you create or modify a test file, you MUST run that test file and iterate until it passes.
 - When writing tests, run them, identify issues in either the test or implementation, and iterate until fixed.
-- For `packages/coding-agent/test/suite/`, use `test/suite/harness.ts` plus the faux provider. Do not use real provider APIs, real API keys, or paid tokens.
-- Put issue-specific regressions under `packages/coding-agent/test/suite/regressions/` and name them `<issue-number>-<short-slug>.test.ts`.
+- For `packages/jarvis-coding-agent/test/suite/`, use `test/suite/harness.ts` plus the faux provider. Do not use real provider APIs, real API keys, or paid tokens.
+- Put issue-specific regressions under `packages/jarvis-coding-agent/test/suite/regressions/` and name them `<issue-number>-<short-slug>.test.ts`.
 - NEVER commit unless user asks
 
 ## Contribution Gate
@@ -43,7 +43,7 @@
 When creating issues:
 
 - Add `pkg:*` labels to indicate which package(s) the issue affects
-  - Available labels: `pkg:agent`, `pkg:ai`, `pkg:coding-agent`, `pkg:tui`, `pkg:web-ui`
+  - Available labels: `pkg:jarvis-agent`, `pkg:jarvis-ai`, `pkg:jarvis-coding-agent`, `pkg:jarvis-tui`, `pkg:jarvis-web-ui`
 - If an issue spans multiple packages, add all relevant labels
 
 When posting issue/PR comments:
@@ -66,29 +66,29 @@ When closing issues via commit:
 - If the user approves: create a feature branch, pull PR, rebase on main, apply adjustments, commit, merge into main, push, close PR, and leave a comment in the user's tone
 - You never open PRs yourself. We work in feature branches until everything is according to the user's requirements, then merge into main, and push.
 
-## Testing pi Interactive Mode with tmux
+## Testing Jarvis 2.0 Interactive Mode with tmux
 
-To test pi's TUI in a controlled terminal environment:
+To test Jarvis's TUI in a controlled terminal environment:
 
 ```bash
 # Create tmux session with specific dimensions
-tmux new-session -d -s pi-test -x 80 -y 24
+tmux new-session -d -s jarvis-test -x 80 -y 24
 
-# Start pi from source
-tmux send-keys -t pi-test "cd /Users/badlogic/workspaces/pi-mono && ./pi-test.sh" Enter
+# Start jarvis from source
+tmux send-keys -t jarvis-test "cd /Users/prajwal/Desktop/Pi/pi-mono-main && ./jarvis-test.sh" Enter
 
 # Wait for startup, then capture output
-sleep 3 && tmux capture-pane -t pi-test -p
+sleep 3 && tmux capture-pane -t jarvis-test -p
 
 # Send input
-tmux send-keys -t pi-test "your prompt here" Enter
+tmux send-keys -t jarvis-test "your prompt here" Enter
 
 # Send special keys
-tmux send-keys -t pi-test Escape
-tmux send-keys -t pi-test C-o  # ctrl+o
+tmux send-keys -t jarvis-test Escape
+tmux send-keys -t jarvis-test C-o  # ctrl+o
 
 # Cleanup
-tmux kill-session -t pi-test
+tmux kill-session -t jarvis-test
 ```
 
 ## Changelog
@@ -115,131 +115,47 @@ Use these sections under `## [Unreleased]`:
 
 ### Attribution
 
-- **Internal changes (from issues)**: `Fixed foo bar ([#123](https://github.com/badlogic/pi-mono/issues/123))`
-- **External contributions**: `Added feature X ([#456](https://github.com/badlogic/pi-mono/pull/456) by [@username](https://github.com/username))`
+- **Internal changes (from issues)**: `Fixed foo bar ([#123](https://github.com/PrajsRamteke/jarvis2.0/issues/123))`
+- **External contributions**: `Added feature X ([#456](https://github.com/PrajsRamteke/jarvis2.0/pull/456) by [@username](https://github.com/username))`
 
-## Adding a New LLM Provider (packages/ai)
+## Adding a New LLM Provider (packages/jarvis-ai)
 
 Adding a new provider requires changes across multiple files:
 
-### 1. Core Types (`packages/ai/src/types.ts`)
+### 1. Core Types (`packages/jarvis-ai/src/types.ts`)
 
 - Add API identifier to `Api` type union (e.g., `"bedrock-converse-stream"`)
 - Create options interface extending `StreamOptions`
 - Add mapping to `ApiOptionsMap`
 - Add provider name to `KnownProvider` type union
 
-### 2. Provider Implementation (`packages/ai/src/providers/`)
+### 2. Provider Implementation (`packages/jarvis-ai/src/providers/`)
 
 Create provider file exporting:
 
 - `stream<Provider>()` function returning `AssistantMessageEventStream`
-- `streamSimple<Provider>()` for `SimpleStreamOptions` mapping
-- Provider-specific options interface
-- Message/tool conversion functions
-- Response parsing emitting standardized events (`text`, `tool_call`, `thinking`, `usage`, `stop`)
+- `streamSimple<Provider>()` function returning `AssistantMessageEventStream`
+- `getModel<Provider>()` returning `Model<Provider>`
+- Register in `providers/index.ts`
 
-### 3. Provider Exports and Lazy Registration
+### 3. Tests (`packages/jarvis-ai/test/`)
 
-- Add a package subpath export in `packages/ai/package.json` pointing at `./dist/providers/<provider>.js`
-- Add `export type` re-exports in `packages/ai/src/index.ts` for provider option types that should remain available from the root entry
-- Register the provider in `packages/ai/src/providers/register-builtins.ts` via lazy loader wrappers, do not statically import provider implementation modules there
-- Add credential detection in `packages/ai/src/env-api-keys.ts`
+Create provider test file and add to CI.
 
-### 4. Model Generation (`packages/ai/scripts/generate-models.ts`)
+## Adding a New Built-in Tool (packages/jarvis-coding-agent)
 
-- Add logic to fetch/parse models from provider source
-- Map to standardized `Model` interface
+### 1. Implementation (`packages/jarvis-coding-agent/src/core/tools/`)
 
-### 5. Tests (`packages/ai/test/`)
+- Create tool file with schema (TypeBox), operations interface, createTool / createToolDefinition functions
+- Add render function (format*Call / format*Result)
 
-- Always add the provider to `stream.test.ts` with at least one representative model, even if it reuses an existing API implementation such as `openai-completions`.
-- Add the provider to the broader provider matrix where applicable: `tokens.test.ts`, `abort.test.ts`, `empty.test.ts`, `context-overflow.test.ts`, `image-limits.test.ts`, `unicode-surrogate.test.ts`, `tool-call-without-result.test.ts`, `image-tool-result.test.ts`, `total-tokens.test.ts`, `cross-provider-handoff.test.ts`.
-- For `cross-provider-handoff.test.ts`, add at least one provider/model pair. If the provider exposes multiple model families (for example GPT and Claude), add at least one pair per family.
-- For non-standard auth, create utility (e.g., `bedrock-utils.ts`) with credential detection.
+### 2. Registration (`packages/jarvis-coding-agent/src/core/tools/index.ts`)
 
-### 6. Coding Agent (`packages/coding-agent/`)
+- Add to `allToolNames` set
+- Export from index
+- Add to `createToolDefinition` / `createTool` switch
+- Add to `createAllToolDefinitions` / `createAllTools`
 
-- `src/core/model-resolver.ts`: Add default model ID to `defaultModelPerProvider`
-- `src/core/provider-display-names.ts`: Add API-key login display name so `/login` and related UI show the provider for built-in API-key auth.
-- `src/cli/args.ts`: Add env var documentation
-- `README.md`: Add provider setup instructions
-- `docs/providers.md`: Add setup instructions, env var, and `auth.json` key
+### 3. SDK (`packages/jarvis-coding-agent/src/core/sdk.ts`)
 
-### 7. Documentation
-
-- `packages/ai/README.md`: Add to providers table, document options/auth, add env vars
-- `packages/ai/CHANGELOG.md`: Add entry under `## [Unreleased]`
-
-## Releasing
-
-**Lockstep versioning**: All packages always share the same version number. Every release updates all packages together.
-
-**Version semantics** (no major releases):
-
-- `patch`: Bug fixes and new features
-- `minor`: API breaking changes
-
-### Steps
-
-1. **Update CHANGELOGs**: Ensure all changes since last release are documented in the `[Unreleased]` section of each affected package's CHANGELOG.md
-
-2. **Run release script**:
-   ```bash
-   npm run release:patch    # Fixes and additions
-   npm run release:minor    # API breaking changes
-   ```
-
-The script handles: version bump, CHANGELOG finalization, commit, tag, publish, and adding new `[Unreleased]` sections.
-
-## **CRITICAL** Git Rules for Parallel Agents **CRITICAL**
-
-Multiple agents may work on different files in the same worktree simultaneously. You MUST follow these rules:
-
-### Committing
-
-- **ONLY commit files YOU changed in THIS session**
-- ALWAYS include `fixes #<number>` or `closes #<number>` in the commit message when there is a related issue or PR
-- NEVER use `git add -A` or `git add .` - these sweep up changes from other agents
-- ALWAYS use `git add <specific-file-paths>` listing only files you modified
-- Before committing, run `git status` and verify you are only staging YOUR files
-- Track which files you created/modified/deleted during the session
-- It is always fine to include `packages/ai/src/models.generated.ts` in a commit alongside the actual files you want to commit
-
-### Forbidden Git Operations
-
-These commands can destroy other agents' work:
-
-- `git reset --hard` - destroys uncommitted changes
-- `git checkout .` - destroys uncommitted changes
-- `git clean -fd` - deletes untracked files
-- `git stash` - stashes ALL changes including other agents' work
-- `git add -A` / `git add .` - stages other agents' uncommitted work
-- `git commit --no-verify` - bypasses required checks and is never allowed
-
-### Safe Workflow
-
-```bash
-# 1. Check status first
-git status
-
-# 2. Add ONLY your specific files
-git add packages/ai/src/providers/transform-messages.ts
-git add packages/ai/CHANGELOG.md
-
-# 3. Commit
-git commit -m "fix(ai): description"
-
-# 4. Push (pull --rebase if needed, but NEVER reset/checkout)
-git pull --rebase && git push
-```
-
-### If Rebase Conflicts Occur
-
-- Resolve conflicts in YOUR files only
-- If conflict is in a file you didn't modify, abort and ask the user
-- NEVER force push
-
-### User override
-
-If the user instructions conflict with rules set out here, ask for confirmation that they want to override the rules. Only then execute their instructions.
+- Add to imports and exports

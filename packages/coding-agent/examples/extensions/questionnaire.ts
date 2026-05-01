@@ -5,8 +5,8 @@
  * Multiple questions: tab bar navigation between questions
  */
 
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { Editor, type EditorTheme, Key, matchesKey, Text, truncateToWidth } from "@mariozechner/pi-tui";
+import type { ExtensionAPI } from "@prajwal/jarvis-coding-agent";
+import { Editor, type EditorTheme, Key, matchesKey, Text, truncateToWidth } from "@prajwal/jarvis-tui";
 import { Type } from "typebox";
 
 // Types

@@ -1,6 +1,6 @@
 import { join } from "node:path";
-import { Agent, type AgentMessage, type ThinkingLevel } from "@mariozechner/pi-agent-core";
-import { type Message, type Model, streamSimple } from "@mariozechner/pi-ai";
+import { Agent, type AgentMessage, type ThinkingLevel } from "@prajwal/jarvis-agent";
+import { type Message, type Model, streamSimple } from "@prajwal/jarvis-ai";
 import { getAgentDir } from "../config.js";
 import { AgentSession } from "./agent-session.js";
 import { formatNoModelsAvailableMessage } from "./auth-guidance.js";
@@ -22,11 +22,11 @@ import {
 	createEditTool,
 	createFindTool,
 	createGrepTool,
-	createJarvisToolDefinitions,
-	createJarvisOcrTools,
 	createJarvisMacTools,
 	createJarvisMemoryTools,
+	createJarvisOcrTools,
 	createJarvisSkillsTools,
+	createJarvisToolDefinitions,
 	createJarvisWebTools,
 	createLsTool,
 	createReadOnlyTools,
@@ -39,7 +39,7 @@ import {
 export interface CreateAgentSessionOptions {
 	/** Working directory for project-local discovery. Default: process.cwd() */
 	cwd?: string;
-	/** Global config directory. Default: ~/.pi/agent */
+	/** Global config directory. Default: ~/.jarvis/agent */
 	agentDir?: string;
 
 	/** Auth storage for credentials. Default: AuthStorage.create(agentDir/auth.json) */
@@ -177,7 +177,7 @@ function getAttributionHeaders(
  * const { session } = await createAgentSession();
  *
  * // With explicit model
- * import { getModel } from '@mariozechner/pi-ai';
+ * import { getModel } from '@prajwal/jarvis-ai';
  * const { session } = await createAgentSession({
  *   model: getModel('anthropic', 'claude-opus-4-5'),
  *   thinkingLevel: 'high',

@@ -16,11 +16,11 @@ import { spawn } from "node:child_process";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AgentToolResult } from "@mariozechner/pi-agent-core";
-import type { Message } from "@mariozechner/pi-ai";
-import { StringEnum } from "@mariozechner/pi-ai";
-import { type ExtensionAPI, getMarkdownTheme, withFileMutationQueue } from "@mariozechner/pi-coding-agent";
-import { Container, Markdown, Spacer, Text } from "@mariozechner/pi-tui";
+import type { AgentToolResult } from "@prajwal/jarvis-agent";
+import type { Message } from "@prajwal/jarvis-ai";
+import { StringEnum } from "@prajwal/jarvis-ai";
+import { type ExtensionAPI, getMarkdownTheme, withFileMutationQueue } from "@prajwal/jarvis-coding-agent";
+import { Container, Markdown, Spacer, Text } from "@prajwal/jarvis-tui";
 import { Type } from "typebox";
 import { type AgentConfig, type AgentScope, discoverAgents } from "./agents.js";
 
@@ -435,8 +435,8 @@ export default function (pi: ExtensionAPI) {
 		description: [
 			"Delegate tasks to specialized subagents with isolated context.",
 			"Modes: single (agent + task), parallel (tasks array), chain (sequential with {previous} placeholder).",
-			'Default agent scope is "user" (from ~/.pi/agent/agents).',
-			'To enable project-local agents in .pi/agents, set agentScope: "both" (or "project").',
+			'Default agent scope is "user" (from ~/.jarvis/agent/agents).',
+			'To enable project-local agents in .jarvis/agents, set agentScope: "both" (or "project").',
 		].join(" "),
 		parameters: SubagentParams,
 

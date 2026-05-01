@@ -5,7 +5,7 @@
 import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Agent } from "@mariozechner/pi-agent-core";
+import { Agent } from "@prajwal/jarvis-agent";
 import {
 	type AssistantMessage,
 	type AssistantMessageEvent,
@@ -13,7 +13,7 @@ import {
 	getModel,
 	type ImageContent,
 	type TextContent,
-} from "@mariozechner/pi-ai";
+} from "@prajwal/jarvis-ai";
 import { Type } from "typebox";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { AgentSession } from "../src/core/agent-session.js";

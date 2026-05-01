@@ -20,18 +20,30 @@ export const fastFindTool: ToolDefinition = defineTool({
 	promptSnippet: "Fast file search via Spotlight/fd",
 	parameters: Type.Object({
 		query: Type.String({ description: "Filename or substring to search for, e.g. 'resume', 'harness', 'qr'" }),
-		path: Type.Optional(Type.String({ description: "Optional folder to scope the search (e.g. ~/Desktop). Empty = whole Mac" })),
+		path: Type.Optional(
+			Type.String({ description: "Optional folder to scope the search (e.g. ~/Desktop). Empty = whole Mac" }),
+		),
 		kind: Type.Optional(Type.String({ description: "'any' (default), 'file', or 'folder'" })),
 		maxResults: Type.Optional(Type.Number({ default: 50, description: "Max results (default 50, max 500)" })),
 		ext: Type.Optional(Type.String({ description: "Extension filter, e.g. '.png' or 'png,jpg'" })),
 	}),
-	execute: async (_toolCallId, params: { query: string; path?: string; kind?: string; maxResults?: number; ext?: string }, _signal, _onUpdate, _ctx) => {
+	execute: async (
+		_toolCallId,
+		params: { query: string; path?: string; kind?: string; maxResults?: number; ext?: string },
+		_signal,
+		_onUpdate,
+		_ctx,
+	) => {
 		const query = params.query.trim();
 		if (!query) throw new Error("query is required");
 
 		const maxResults = Math.min(params.maxResults ?? 50, 500);
 		const kind = params.kind ?? "any";
-		const extFilter = (params.ext ?? "").replace(/\s/g, "").split(",").map((e) => (e.startsWith(".") ? e : `.${e}`)).filter(Boolean);
+		const extFilter = (params.ext ?? "")
+			.replace(/\s/g, "")
+			.split(",")
+			.map((e) => (e.startsWith(".") ? e : `.${e}`))
+			.filter(Boolean);
 		const extSet = new Set(extFilter.map((e) => e.toLowerCase()));
 		const results: string[] = [];
 
@@ -51,9 +63,13 @@ export const fastFindTool: ToolDefinition = defineTool({
 					if (kind === "folder" && !s.isDirectory()) continue;
 					if (extSet.size > 0 && !extSet.has(extname(line).toLowerCase())) continue;
 					results.push(line);
-				} catch { /* skip inaccessible */ }
+				} catch {
+					/* skip inaccessible */
+				}
 			}
-		} catch { /* mdfind failed */ }
+		} catch {
+			/* mdfind failed */
+		}
 
 		// Fallback to fd
 		if (results.length === 0) {
@@ -68,7 +84,9 @@ export const fastFindTool: ToolDefinition = defineTool({
 					if (results.length >= maxResults) break;
 					results.push(line);
 				}
-			} catch { /* fd not available */ }
+			} catch {
+				/* fd not available */
+			}
 		}
 
 		if (results.length === 0) {

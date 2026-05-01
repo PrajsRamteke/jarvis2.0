@@ -7,7 +7,7 @@ import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AgentMessage } from "@mariozechner/pi-agent-core";
+import type { AgentMessage } from "@prajwal/jarvis-agent";
 import {
 	type AssistantMessage,
 	getProviders,
@@ -15,7 +15,7 @@ import {
 	type Message,
 	type Model,
 	type OAuthProviderId,
-} from "@mariozechner/pi-ai";
+} from "@prajwal/jarvis-ai";
 import type {
 	AutocompleteItem,
 	AutocompleteProvider,
@@ -26,7 +26,7 @@ import type {
 	OverlayHandle,
 	OverlayOptions,
 	SlashCommand,
-} from "@mariozechner/pi-tui";
+} from "@prajwal/jarvis-tui";
 import {
 	CombinedAutocompleteProvider,
 	type Component,
@@ -43,7 +43,7 @@ import {
 	TruncatedText,
 	TUI,
 	visibleWidth,
-} from "@mariozechner/pi-tui";
+} from "@prajwal/jarvis-tui";
 import { spawn, spawnSync } from "child_process";
 import {
 	APP_NAME,

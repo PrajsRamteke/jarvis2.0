@@ -9,9 +9,12 @@
 
 // ── Regex triggers for each tool group ──────────────────────────────────────
 
-const WEB_RE = /\b(web|internet|search online|look up|latest|today|news|price|weather|url|https?:\/\/|docs?|documentation)\b/i;
-const MAC_RE = /\b(click|type|press|open app|launch|focus|safari|finder|whatsapp|messages|mail|calendar|reminders|clipboard|screen|ui|macos|speak|speck|read aloud|text to speech|tts|aloud|voice|sound|notify)\b/i;
-const OCR_RE = /\b(ocr|screenshot|image|photo|picture|png|jpe?g|heic|tiff?|resume|cv|voter|license|licence|passport|id card|personal id)\b/i;
+const WEB_RE =
+	/\b(web|internet|search online|look up|latest|today|news|price|weather|url|https?:\/\/|docs?|documentation)\b/i;
+const MAC_RE =
+	/\b(click|type|press|open app|launch|focus|safari|finder|whatsapp|messages|mail|calendar|reminders|clipboard|screen|ui|macos|speak|speck|read aloud|text to speech|tts|aloud|voice|sound|notify)\b/i;
+const OCR_RE =
+	/\b(ocr|screenshot|image|photo|picture|png|jpe?g|heic|tiff?|resume|cv|voter|license|licence|passport|id card|personal id)\b/i;
 const MEMORY_RE = /\b(remember|memory|forget|my name|preference|about me)\b/i;
 const SKILL_RE = /\b(skill|lesson|learned|remember how|same task)\b/i;
 
@@ -19,25 +22,57 @@ const SKILL_RE = /\b(skill|lesson|learned|remember how|same task)\b/i;
 
 const TOOL_GROUP_MAP: Record<string, string> = {
 	// Core tools: always available
-	read_file: "core", read_document: "core", write_file: "core", edit_file: "core",
-	list_dir: "core", run_bash: "core", search_code: "core", glob_files: "core",
-	rank_files: "core", fast_find: "core",
-	git_status: "core", git_diff: "core", git_log: "core",
+	read_file: "core",
+	read_document: "core",
+	write_file: "core",
+	edit_file: "core",
+	list_dir: "core",
+	run_bash: "core",
+	search_code: "core",
+	glob_files: "core",
+	rank_files: "core",
+	fast_find: "core",
+	git_status: "core",
+	git_diff: "core",
+	git_log: "core",
 	// Internet tools
-	web_search: "web", fetch_url: "web", verified_search: "web",
+	web_search: "web",
+	fetch_url: "web",
+	verified_search: "web",
 	// Mac GUI tools
-	launch_app: "mac", focus_app: "mac", quit_app: "mac", list_apps: "mac",
-	frontmost_app: "mac", applescript: "mac", read_ui: "mac",
-	click_element: "mac", wait: "mac", check_permissions: "mac",
-	type_text: "mac", key_press: "mac", click_menu: "mac", click_at: "mac",
-	clipboard_get: "mac", clipboard_set: "mac", open_url: "mac", notify: "mac",
-	speck: "mac", shortcut_run: "mac", mac_control: "mac",
+	launch_app: "mac",
+	focus_app: "mac",
+	quit_app: "mac",
+	list_apps: "mac",
+	frontmost_app: "mac",
+	applescript: "mac",
+	read_ui: "mac",
+	click_element: "mac",
+	wait: "mac",
+	check_permissions: "mac",
+	type_text: "mac",
+	key_press: "mac",
+	click_menu: "mac",
+	click_at: "mac",
+	clipboard_get: "mac",
+	clipboard_set: "mac",
+	open_url: "mac",
+	notify: "mac",
+	speck: "mac",
+	shortcut_run: "mac",
+	mac_control: "mac",
 	// OCR
-	read_image_text: "ocr", read_images_text: "ocr",
+	read_image_text: "ocr",
+	read_images_text: "ocr",
 	// Memory
-	memory_save: "memory", memory_list: "memory", memory_delete: "memory",
+	memory_save: "memory",
+	memory_list: "memory",
+	memory_delete: "memory",
 	// Skills
-	skill_save: "skills", skill_search: "skills", skill_list: "skills", skill_delete: "skills",
+	skill_save: "skills",
+	skill_search: "skills",
+	skill_list: "skills",
+	skill_delete: "skills",
 };
 
 /** Groups that are always included. */

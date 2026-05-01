@@ -17,9 +17,9 @@
  * separate variables. Only the agent cursor is ever exposed to the agent.
  */
 
-import { StringEnum } from "@mariozechner/pi-ai";
-import type { ExtensionAPI, ExtensionContext, Theme, ToolExecutionMode } from "@mariozechner/pi-coding-agent";
-import { type Component, matchesKey, Text, truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
+import { StringEnum } from "@prajwal/jarvis-ai";
+import type { ExtensionAPI, ExtensionContext, Theme, ToolExecutionMode } from "@prajwal/jarvis-coding-agent";
+import { type Component, matchesKey, Text, truncateToWidth, visibleWidth } from "@prajwal/jarvis-tui";
 import { Type } from "typebox";
 
 // Thrown from the tool on illegal actions. The agent runtime surfaces thrown

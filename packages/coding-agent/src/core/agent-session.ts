@@ -15,16 +15,9 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, resolve } from "node:path";
-import type {
-	Agent,
-	AgentEvent,
-	AgentMessage,
-	AgentState,
-	AgentTool,
-	ThinkingLevel,
-} from "@mariozechner/pi-agent-core";
-import type { AssistantMessage, ImageContent, Message, Model, TextContent } from "@mariozechner/pi-ai";
-import { isContextOverflow, modelsAreEqual, resetApiProviders, supportsXhigh } from "@mariozechner/pi-ai";
+import type { Agent, AgentEvent, AgentMessage, AgentState, AgentTool, ThinkingLevel } from "@prajwal/jarvis-agent";
+import type { AssistantMessage, ImageContent, Message, Model, TextContent } from "@prajwal/jarvis-ai";
+import { isContextOverflow, modelsAreEqual, resetApiProviders, supportsXhigh } from "@prajwal/jarvis-ai";
 import { theme } from "../modes/interactive/theme/theme.js";
 import { stripFrontmatter } from "../utils/frontmatter.js";
 import { sleep } from "../utils/sleep.js";
@@ -80,7 +73,7 @@ import type { SlashCommandInfo } from "./slash-commands.js";
 import { createSyntheticSourceInfo, type SourceInfo } from "./source-info.js";
 import { type BuildSystemPromptOptions, buildSystemPrompt } from "./system-prompt.js";
 import { type BashOperations, createLocalBashOperations } from "./tools/bash.js";
-import { createAllToolDefinitions } from "./tools/index.js";
+import { createAllToolDefinitions, createJarvisToolDefinitions } from "./tools/index.js";
 import { createToolDefinitionFromAgentTool } from "./tools/tool-definition-wrapper.js";
 
 // ============================================================================
@@ -935,6 +928,8 @@ export class AgentSession {
 
 		this._baseSystemPromptOptions = {
 			cwd: this._cwd,
+			fullPrompt: true,
+			codingAddon: true,
 			skills: loadedSkills,
 			contextFiles: loadedContextFiles,
 			customPrompt: loaderSystemPrompt,
@@ -2365,6 +2360,13 @@ export class AgentSession {
 		this._baseToolDefinitions = new Map(
 			Object.entries(baseToolDefinitions).map(([name, tool]) => [name, tool as ToolDefinition]),
 		);
+
+		// Register Jarvis tools (OCR, Mac GUI, Web, Memory, Skills, fastFind, rankFiles)
+		for (const jarvisTool of createJarvisToolDefinitions()) {
+			if (!this._baseToolDefinitions.has(jarvisTool.name)) {
+				this._baseToolDefinitions.set(jarvisTool.name, jarvisTool);
+			}
+		}
 
 		const extensionsResult = this._resourceLoader.getExtensions();
 		if (options.flagValues) {

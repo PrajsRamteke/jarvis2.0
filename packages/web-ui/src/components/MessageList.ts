@@ -1,8 +1,8 @@
-import type { AgentMessage, AgentTool } from "@mariozechner/pi-agent-core";
+import type { AgentMessage, AgentTool } from "@prajwal/jarvis-agent";
 import type {
 	AssistantMessage as AssistantMessageType,
 	ToolResultMessage as ToolResultMessageType,
-} from "@mariozechner/pi-ai";
+} from "@prajwal/jarvis-ai";
 import { html, LitElement, type TemplateResult } from "lit";
 import { property } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";

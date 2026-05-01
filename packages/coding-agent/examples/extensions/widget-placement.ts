@@ -1,4 +1,4 @@
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI } from "@prajwal/jarvis-coding-agent";
 
 export default function widgetPlacementExtension(pi: ExtensionAPI) {
 	pi.on("session_start", (_event, ctx) => {

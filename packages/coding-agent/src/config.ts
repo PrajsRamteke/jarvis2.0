@@ -304,7 +304,7 @@ export function getBundledInteractiveAssetPath(name: string): string {
 }
 
 // =============================================================================
-// App Config (from package.json piConfig)
+// App Config (from package.json)
 // =============================================================================
 
 interface PackageJson {
@@ -318,11 +318,11 @@ interface PackageJson {
 
 const pkg = JSON.parse(readFileSync(getPackageJsonPath(), "utf-8")) as PackageJson;
 
-const piConfigName: string | undefined = pkg.piConfig?.name;
-export const PACKAGE_NAME: string = pkg.name || "@mariozechner/pi-coding-agent";
-export const APP_NAME: string = piConfigName || "pi";
-export const APP_TITLE: string = piConfigName ? APP_NAME : "π";
-export const CONFIG_DIR_NAME: string = pkg.piConfig?.configDir || ".pi";
+const jarvisConfigName: string | undefined = pkg.piConfig?.name;
+export const PACKAGE_NAME: string = pkg.name || "@prajwal/jarvis-coding-agent";
+export const APP_NAME: string = jarvisConfigName || "jarvis";
+export const APP_TITLE: string = jarvisConfigName ? APP_NAME : "Jarvis 2.0";
+export const CONFIG_DIR_NAME: string = pkg.piConfig?.configDir || ".jarvis";
 export const VERSION: string = pkg.version || "0.0.0";
 
 // e.g., PI_CODING_AGENT_DIR or TAU_CODING_AGENT_DIR
@@ -344,10 +344,10 @@ export function getShareViewerUrl(gistId: string): string {
 }
 
 // =============================================================================
-// User Config Paths (~/.pi/agent/*)
+// User Config Paths (~/.jarvis/agent/*)
 // =============================================================================
 
-/** Get the agent config directory (e.g., ~/.pi/agent/) */
+/** Get the agent config directory (e.g., ~/.jarvis/agent/) */
 export function getAgentDir(): string {
 	const envDir = process.env[ENV_AGENT_DIR];
 	if (envDir) {

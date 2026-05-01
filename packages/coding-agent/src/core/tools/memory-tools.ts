@@ -66,7 +66,10 @@ export const memorySaveTool: ToolDefinition = defineTool({
 		const store = load();
 		const existing = store.facts.find((f) => f.text.toLowerCase() === text.toLowerCase());
 		if (existing) {
-			return { content: [{ type: "text" as const, text: `already saved #${existing.id}: ${existing.text}` }], details: undefined };
+			return {
+				content: [{ type: "text" as const, text: `already saved #${existing.id}: ${existing.text}` }],
+				details: undefined,
+			};
 		}
 		const fact: Fact = { id: store.nextId, text, ts: Math.floor(Date.now() / 1000) };
 		store.facts.push(fact);
@@ -82,7 +85,7 @@ export const memoryListTool: ToolDefinition = defineTool({
 	description: "List every stored personal fact about the user. Use when you need to recall what you know.",
 	promptSnippet: "List all stored personal facts",
 	parameters: Type.Object({}),
-	execute: async (_toolCallId, _params: {}, _signal, _onUpdate, _ctx) => {
+	execute: async (_toolCallId, _params: Record<string, never>, _signal, _onUpdate, _ctx) => {
 		const store = load();
 		if (store.facts.length === 0) {
 			return { content: [{ type: "text" as const, text: "(memory is empty)" }], details: undefined };

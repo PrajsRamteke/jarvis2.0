@@ -12,14 +12,47 @@ import { defineTool } from "../extensions/types.js";
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const SKIP_DIRS = new Set([
-	".git", ".hg", ".svn", "node_modules", ".venv", "venv", "__pycache__",
-	".pytest_cache", ".mypy_cache", ".ruff_cache", "dist", "build", ".next",
+	".git",
+	".hg",
+	".svn",
+	"node_modules",
+	".venv",
+	"venv",
+	"__pycache__",
+	".pytest_cache",
+	".mypy_cache",
+	".ruff_cache",
+	"dist",
+	"build",
+	".next",
 ]);
 
 const TEXT_EXTS = new Set([
-	".py", ".js", ".jsx", ".ts", ".tsx", ".json", ".md", ".txt", ".toml",
-	".yaml", ".yml", ".css", ".scss", ".html", ".sh", ".sql", ".prisma",
-	".env", ".ini", ".cfg", ".rs", ".go", ".java", ".kt", ".swift",
+	".py",
+	".js",
+	".jsx",
+	".ts",
+	".tsx",
+	".json",
+	".md",
+	".txt",
+	".toml",
+	".yaml",
+	".yml",
+	".css",
+	".scss",
+	".html",
+	".sh",
+	".sql",
+	".prisma",
+	".env",
+	".ini",
+	".cfg",
+	".rs",
+	".go",
+	".java",
+	".kt",
+	".swift",
 ]);
 
 const MAX_SNIPPET_CHARS = 240;
@@ -27,7 +60,12 @@ const MAX_SCAN_LIMIT = 3000;
 const DEFAULT_MAX_FILES = 30;
 
 function tokenize(text: string): Set<string> {
-	return new Set(text.toLowerCase().split(/[^a-z0-9_]+/).filter(Boolean));
+	return new Set(
+		text
+			.toLowerCase()
+			.split(/[^a-z0-9_]+/)
+			.filter(Boolean),
+	);
 }
 
 function scoreText(text: string, queryTokens: Set<string>): number {
@@ -57,7 +95,11 @@ function collectFiles(
 	function walk(current: string): void {
 		if (results.length >= maxFiles || scanned >= MAX_SCAN_LIMIT) return;
 		let entries: string[];
-		try { entries = readdirSync(current); } catch { return; }
+		try {
+			entries = readdirSync(current);
+		} catch {
+			return;
+		}
 		for (const entry of entries) {
 			if (results.length >= maxFiles || scanned >= MAX_SCAN_LIMIT) return;
 			const fullPath = resolve(current, entry);
@@ -65,21 +107,32 @@ function collectFiles(
 			if (SKIP_DIRS.has(entry)) continue;
 			try {
 				const s = statSync(fullPath);
-				if (s.isDirectory()) { walk(fullPath); }
-				else if (s.isFile()) {
+				if (s.isDirectory()) {
+					walk(fullPath);
+				} else if (s.isFile()) {
 					const ext = extname(entry).toLowerCase();
 					if (!TEXT_EXTS.has(ext)) continue;
 					let content = "";
-					try { content = readFileSync(fullPath, { encoding: "utf-8" }).slice(0, maxSnippetChars); } catch { continue; }
+					try {
+						content = readFileSync(fullPath, { encoding: "utf-8" }).slice(0, maxSnippetChars);
+					} catch {
+						continue;
+					}
 					const nameScore = scoreText(entry, queryTokens);
 					const contentScore = scoreText(content, queryTokens);
 					const totalScore = nameScore * 3 + contentScore;
 					if (totalScore > 0 || includeSnippets) {
 						const relPath = relative(root, fullPath);
-						results.push({ path: relPath || entry, score: totalScore, snippet: includeSnippets ? content.slice(0, maxSnippetChars) : "" });
+						results.push({
+							path: relPath || entry,
+							score: totalScore,
+							snippet: includeSnippets ? content.slice(0, maxSnippetChars) : "",
+						});
 					}
 				}
-			} catch { /* skip inaccessible */ }
+			} catch {
+				/* skip inaccessible */
+			}
 		}
 	}
 
@@ -100,11 +153,30 @@ export const rankFilesTool: ToolDefinition = defineTool({
 		query: Type.String({ description: "What you are trying to find or solve" }),
 		path: Type.Optional(Type.String({ description: "Folder to scan. Default current directory" })),
 		pattern: Type.Optional(Type.String({ description: "Glob under path. Default **/*" })),
-		maxFiles: Type.Optional(Type.Number({ default: DEFAULT_MAX_FILES, description: "Max ranked results (default 30, max 100)" })),
-		includeSnippets: Type.Optional(Type.Boolean({ default: false, description: "Include text previews for scoring" })),
-		maxSnippetChars: Type.Optional(Type.Number({ default: MAX_SNIPPET_CHARS, description: "Snippet chars per file" })),
+		maxFiles: Type.Optional(
+			Type.Number({ default: DEFAULT_MAX_FILES, description: "Max ranked results (default 30, max 100)" }),
+		),
+		includeSnippets: Type.Optional(
+			Type.Boolean({ default: false, description: "Include text previews for scoring" }),
+		),
+		maxSnippetChars: Type.Optional(
+			Type.Number({ default: MAX_SNIPPET_CHARS, description: "Snippet chars per file" }),
+		),
 	}),
-	execute: async (_toolCallId, params: { query: string; path?: string; pattern?: string; maxFiles?: number; includeSnippets?: boolean; maxSnippetChars?: number }, _signal, _onUpdate, _ctx) => {
+	execute: async (
+		_toolCallId,
+		params: {
+			query: string;
+			path?: string;
+			pattern?: string;
+			maxFiles?: number;
+			includeSnippets?: boolean;
+			maxSnippetChars?: number;
+		},
+		_signal,
+		_onUpdate,
+		_ctx,
+	) => {
 		const query = params.query.trim();
 		if (!query) throw new Error("query is required");
 
@@ -117,12 +189,16 @@ export const rankFilesTool: ToolDefinition = defineTool({
 		const files = collectFiles(scanDir, maxFiles, queryTokens, includeSnippets, maxSnippetChars);
 
 		if (files.length === 0) {
-			return { content: [{ type: "text" as const, text: `No relevant files found for: ${query}` }], details: undefined };
+			return {
+				content: [{ type: "text" as const, text: `No relevant files found for: ${query}` }],
+				details: undefined,
+			};
 		}
 
 		const lines = files.map((f, i) => {
 			const scorePct = Math.min(100, Math.round((f.score / Math.max(1, files[0].score)) * 100));
-			const snippet = includeSnippets && f.snippet ? `\n  ${f.snippet.replace(/\n/g, " ").slice(0, maxSnippetChars)}` : "";
+			const snippet =
+				includeSnippets && f.snippet ? `\n  ${f.snippet.replace(/\n/g, " ").slice(0, maxSnippetChars)}` : "";
 			return `${i + 1}. [${scorePct}%] ${f.path}${snippet}`;
 		});
 

@@ -49,14 +49,19 @@ function load(): SkillStore {
 function save(store: SkillStore): void {
 	ensureDir();
 	if (store.skills.length > MAX_STORE) {
-		store.skills.sort((a, b) => (a.hits - b.hits) || (a.ts - b.ts));
+		store.skills.sort((a, b) => a.hits - b.hits || a.ts - b.ts);
 		store.skills = store.skills.slice(-MAX_STORE);
 	}
 	writeFileSync(SKILL_FILE, JSON.stringify(store, null, 2), "utf-8");
 }
 
 function tokens(text: string): Set<string> {
-	return new Set(text.toLowerCase().split(/[^a-z0-9_]+/).filter(Boolean));
+	return new Set(
+		text
+			.toLowerCase()
+			.split(/[^a-z0-9_]+/)
+			.filter(Boolean),
+	);
 }
 
 // ── Tools ────────────────────────────────────────────────────────────────────
@@ -76,29 +81,54 @@ export const skillSaveTool: ToolDefinition = defineTool({
 		lesson: Type.String({ description: "The actionable takeaway / solution / gotcha" }),
 		tags: Type.Optional(Type.Array(Type.String(), { description: "Keywords for retrieval, e.g. ['git','rebase']" })),
 	}),
-	execute: async (_toolCallId, params: { task: string; lesson: string; tags?: string[] }, _signal, _onUpdate, _ctx) => {
+	execute: async (
+		_toolCallId,
+		params: { task: string; lesson: string; tags?: string[] },
+		_signal,
+		_onUpdate,
+		_ctx,
+	) => {
 		const task = params.task.trim();
 		const lesson = params.lesson.trim();
 		if (!task || !lesson) throw new Error("task and lesson are required");
 		const tags = [...new Set((params.tags ?? []).map((t) => t.trim().toLowerCase()).filter(Boolean))].sort();
 		const store = load();
-		const existing = store.skills.find((s) => s.task.toLowerCase() === task.toLowerCase() && s.lesson.toLowerCase() === lesson.toLowerCase());
+		const existing = store.skills.find(
+			(s) => s.task.toLowerCase() === task.toLowerCase() && s.lesson.toLowerCase() === lesson.toLowerCase(),
+		);
 		if (existing) {
 			existing.tags = [...new Set([...existing.tags, ...tags])].sort();
 			existing.ts = Math.floor(Date.now() / 1000);
 			save(store);
 			const tagStr = existing.tags.length > 0 ? ` [${existing.tags.join(", ")}]` : "";
-			return { content: [{ type: "text" as const, text: `updated skill #${existing.id}${tagStr}: ${existing.task} → ${existing.lesson}` }], details: undefined };
+			return {
+				content: [
+					{
+						type: "text" as const,
+						text: `updated skill #${existing.id}${tagStr}: ${existing.task} → ${existing.lesson}`,
+					},
+				],
+				details: undefined,
+			};
 		}
 		const skill: SkillRecord = {
-			id: store.nextId, task, lesson, tags,
-			ts: Math.floor(Date.now() / 1000), hits: 0,
+			id: store.nextId,
+			task,
+			lesson,
+			tags,
+			ts: Math.floor(Date.now() / 1000),
+			hits: 0,
 		};
 		store.skills.push(skill);
 		store.nextId++;
 		save(store);
 		const tagStr = tags.length > 0 ? ` [${tags.join(", ")}]` : "";
-		return { content: [{ type: "text" as const, text: `saved skill #${skill.id}${tagStr}: ${skill.task} → ${skill.lesson}` }], details: undefined };
+		return {
+			content: [
+				{ type: "text" as const, text: `saved skill #${skill.id}${tagStr}: ${skill.task} → ${skill.lesson}` },
+			],
+			details: undefined,
+		};
 	},
 });
 
@@ -149,7 +179,7 @@ export const skillListTool: ToolDefinition = defineTool({
 	description: "List every saved skill with hit counts. Rarely needed — prefer skill_search.",
 	promptSnippet: "List all saved skills",
 	parameters: Type.Object({}),
-	execute: async (_toolCallId, _params: {}, _signal, _onUpdate, _ctx) => {
+	execute: async (_toolCallId, _params: Record<string, never>, _signal, _onUpdate, _ctx) => {
 		const store = load();
 		if (store.skills.length === 0) {
 			return { content: [{ type: "text" as const, text: "(no skills saved)" }], details: undefined };

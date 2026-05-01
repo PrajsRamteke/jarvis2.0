@@ -16,7 +16,7 @@
  * Then use ctrl+o to toggle between minimal (collapsed) and full (expanded) views.
  */
 
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI } from "@prajwal/jarvis-coding-agent";
 import {
 	createBashTool,
 	createEditTool,
@@ -25,8 +25,8 @@ import {
 	createLsTool,
 	createReadTool,
 	createWriteTool,
-} from "@mariozechner/pi-coding-agent";
-import { Text } from "@mariozechner/pi-tui";
+} from "@prajwal/jarvis-coding-agent";
+import { Text } from "@prajwal/jarvis-tui";
 import { homedir } from "os";
 
 /**

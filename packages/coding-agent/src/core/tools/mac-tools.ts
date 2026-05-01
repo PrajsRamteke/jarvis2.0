@@ -4,7 +4,7 @@
  * clipboard, AppleScript, keystrokes, notifications, TTS.
  */
 
-import { execSync, execFileSync, spawnSync } from "node:child_process";
+import { execFileSync, execSync, spawnSync } from "node:child_process";
 import { Type } from "typebox";
 import type { ToolDefinition } from "../extensions/types.js";
 import { defineTool } from "../extensions/types.js";
@@ -27,7 +27,7 @@ function osa(script: string, timeout = 30): string {
 
 function osaJxa(script: string, args: string[], timeout = 25): string {
 	try {
-		const fullScript = script + "\n" + args.map((a) => JSON.stringify(a)).join("\n");
+		const fullScript = `${script}\n${args.map((a) => JSON.stringify(a)).join("\n")}`;
 		const r = execSync(`osascript -l JavaScript -e ${JSON.stringify(fullScript)}`, {
 			encoding: "utf-8",
 			timeout: timeout * 1000,
@@ -123,14 +123,14 @@ export const launchAppTool: ToolDefinition = defineTool({
 		const { name } = params;
 		const r = spawnSync("open", ["-a", name], { encoding: "utf-8", timeout: 10_000 });
 		if (r.status !== 0) {
-			throw new Error(r.stderr?.trim() || "could not open " + name);
+			throw new Error(r.stderr?.trim() || `could not open ${name}`);
 		}
 		for (let i = 0; i < 15; i++) {
 			try {
-				const probe = execSync(
-					`osascript -e 'tell application "System Events" to exists (process "${name}")'`,
-					{ encoding: "utf-8", timeout: 3000 },
-				).trim();
+				const probe = execSync(`osascript -e 'tell application "System Events" to exists (process "${name}")'`, {
+					encoding: "utf-8",
+					timeout: 3000,
+				}).trim();
 				if (probe === "true") break;
 			} catch {}
 		}
@@ -146,7 +146,10 @@ export const focusAppTool: ToolDefinition = defineTool({
 	promptSnippet: "Bring a running Mac app to front",
 	parameters: Type.Object({ name: Type.String() }),
 	execute: async (_toolCallId, params: { name: string }, _signal, _onUpdate, _ctx) => {
-		return { content: [{ type: "text" as const, text: osa(`tell application "${params.name}" to activate`) }], details: undefined };
+		return {
+			content: [{ type: "text" as const, text: osa(`tell application "${params.name}" to activate`) }],
+			details: undefined,
+		};
 	},
 });
 
@@ -157,7 +160,10 @@ export const quitAppTool: ToolDefinition = defineTool({
 	promptSnippet: "Quit a running Mac app",
 	parameters: Type.Object({ name: Type.String() }),
 	execute: async (_toolCallId, params: { name: string }, _signal, _onUpdate, _ctx) => {
-		return { content: [{ type: "text" as const, text: osa(`tell application "${params.name}" to quit`) }], details: undefined };
+		return {
+			content: [{ type: "text" as const, text: osa(`tell application "${params.name}" to quit`) }],
+			details: undefined,
+		};
 	},
 });
 
@@ -167,9 +173,16 @@ export const listAppsTool: ToolDefinition = defineTool({
 	description: "List visible running Mac applications.",
 	promptSnippet: "List running Mac applications",
 	parameters: Type.Object({}),
-	execute: async (_toolCallId, _params: {}, _signal, _onUpdate, _ctx) => {
+	execute: async (_toolCallId, _params: Record<string, never>, _signal, _onUpdate, _ctx) => {
 		return {
-			content: [{ type: "text" as const, text: osa('tell application "System Events" to get name of (every process whose background only is false)') }],
+			content: [
+				{
+					type: "text" as const,
+					text: osa(
+						'tell application "System Events" to get name of (every process whose background only is false)',
+					),
+				},
+			],
 			details: undefined,
 		};
 	},
@@ -181,9 +194,14 @@ export const frontmostAppTool: ToolDefinition = defineTool({
 	description: "Get the name of the frontmost (active) Mac app.",
 	promptSnippet: "Get the frontmost Mac app name",
 	parameters: Type.Object({}),
-	execute: async (_toolCallId, _params: {}, _signal, _onUpdate, _ctx) => {
+	execute: async (_toolCallId, _params: Record<string, never>, _signal, _onUpdate, _ctx) => {
 		return {
-			content: [{ type: "text" as const, text: osa('tell application "System Events" to get name of first process whose frontmost is true') }],
+			content: [
+				{
+					type: "text" as const,
+					text: osa('tell application "System Events" to get name of first process whose frontmost is true'),
+				},
+			],
 			details: undefined,
 		};
 	},
@@ -224,13 +242,22 @@ export const readUiTool: ToolDefinition = defineTool({
 		maxLines: Type.Optional(Type.Number({ description: "Max lines (default 400)" })),
 		maxChars: Type.Optional(Type.Number({ description: "Max output chars (default 14000)" })),
 	}),
-	execute: async (_toolCallId, params: { app?: string; maxDepth?: number; maxLines?: number; maxChars?: number }, _signal, _onUpdate, _ctx) => {
+	execute: async (
+		_toolCallId,
+		params: { app?: string; maxDepth?: number; maxLines?: number; maxChars?: number },
+		_signal,
+		_onUpdate,
+		_ctx,
+	) => {
 		const app = params.app ?? "";
 		const maxDepth = params.maxDepth ?? 7;
 		const maxLines = params.maxLines ?? 400;
 		const maxChars = params.maxChars ?? 14000;
 		const result = osaJxa(READ_UI_JXA, [app, String(maxDepth), String(maxLines)]);
-		const truncated = result.length > maxChars ? result.slice(0, maxChars) + `\n… [truncated, ${result.length} chars total]` : result;
+		const truncated =
+			result.length > maxChars
+				? `${result.slice(0, maxChars)}\n… [truncated, ${result.length} chars total]`
+				: result;
 		return { content: [{ type: "text" as const, text: truncated }], details: undefined };
 	},
 });
@@ -248,7 +275,13 @@ export const clickElementTool: ToolDefinition = defineTool({
 		role: Type.Optional(Type.String({ description: "Role filter e.g. 'button', 'row'" })),
 		nth: Type.Optional(Type.Number({ description: "Match index (1-based, default 1)" })),
 	}),
-	execute: async (_toolCallId, params: { app: string; query: string; role?: string; nth?: number }, _signal, _onUpdate, _ctx) => {
+	execute: async (
+		_toolCallId,
+		params: { app: string; query: string; role?: string; nth?: number },
+		_signal,
+		_onUpdate,
+		_ctx,
+	) => {
 		const result = osaJxa(FIND_CLICK_JXA, [params.app, params.query, params.role ?? "", String(params.nth ?? 1)]);
 		return { content: [{ type: "text" as const, text: result }], details: undefined };
 	},
@@ -272,18 +305,24 @@ export const waitTool: ToolDefinition = defineTool({
 export const checkPermissionsTool: ToolDefinition = defineTool({
 	name: "check_permissions",
 	label: "Check Accessibility Permissions",
-	description: "Verify macOS Accessibility permission is granted to the terminal. Call this first if UI tools are failing.",
+	description:
+		"Verify macOS Accessibility permission is granted to the terminal. Call this first if UI tools are failing.",
 	promptSnippet: "Check macOS accessibility permissions",
 	parameters: Type.Object({}),
-	execute: async (_toolCallId, _params: {}, _signal, _onUpdate, _ctx) => {
+	execute: async (_toolCallId, _params: Record<string, never>, _signal, _onUpdate, _ctx) => {
 		try {
 			const r = execSync(
 				`osascript -e 'tell application "System Events" to get name of first process whose frontmost is true'`,
 				{ encoding: "utf-8", timeout: 5000 },
 			).trim();
-			return { content: [{ type: "text" as const, text: `Accessibility OK. Frontmost app: ${r}` }], details: undefined };
+			return {
+				content: [{ type: "text" as const, text: `Accessibility OK. Frontmost app: ${r}` }],
+				details: undefined,
+			};
 		} catch {
-			throw new Error("Accessibility permission denied. Enable it in System Settings → Privacy & Security → Accessibility.");
+			throw new Error(
+				"Accessibility permission denied. Enable it in System Settings → Privacy & Security → Accessibility.",
+			);
 		}
 	},
 });
@@ -296,31 +335,61 @@ export const typeTextTool: ToolDefinition = defineTool({
 	parameters: Type.Object({ text: Type.String() }),
 	execute: async (_toolCallId, params: { text: string }, _signal, _onUpdate, _ctx) => {
 		const escaped = params.text.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-		return { content: [{ type: "text" as const, text: osa(`tell application "System Events" to keystroke "${escaped}"`) }], details: undefined };
+		return {
+			content: [{ type: "text" as const, text: osa(`tell application "System Events" to keystroke "${escaped}"`) }],
+			details: undefined,
+		};
 	},
 });
 
 const KEYCODES: Record<string, number> = {
-	return: 36, enter: 36, tab: 48, space: 49, delete: 51, backspace: 51,
-	escape: 53, esc: 53, left: 123, right: 124, down: 125, up: 126,
-	home: 115, end: 119, pageup: 116, pagedown: 121,
-	f1: 122, f2: 120, f3: 99, f4: 118, f5: 96, f6: 97, f7: 98,
-	f8: 100, f9: 101, f10: 109, f11: 103, f12: 111,
+	return: 36,
+	enter: 36,
+	tab: 48,
+	space: 49,
+	delete: 51,
+	backspace: 51,
+	escape: 53,
+	esc: 53,
+	left: 123,
+	right: 124,
+	down: 125,
+	up: 126,
+	home: 115,
+	end: 119,
+	pageup: 116,
+	pagedown: 121,
+	f1: 122,
+	f2: 120,
+	f3: 99,
+	f4: 118,
+	f5: 96,
+	f6: 97,
+	f7: 98,
+	f8: 100,
+	f9: 101,
+	f10: 109,
+	f11: 103,
+	f12: 111,
 };
 
 export const keyPressTool: ToolDefinition = defineTool({
 	name: "key_press",
 	label: "Press Key",
-	description:
-		"Press a key or chord into the frontmost app, e.g. 'return', 'cmd+f', 'cmd+shift+t', 'down'.",
+	description: "Press a key or chord into the frontmost app, e.g. 'return', 'cmd+f', 'cmd+shift+t', 'down'.",
 	promptSnippet: "Press a key or keyboard shortcut",
 	parameters: Type.Object({ keys: Type.String({ description: "Key or chord, e.g. 'return', 'cmd+f', 'down'" }) }),
 	execute: async (_toolCallId, params: { keys: string }, _signal, _onUpdate, _ctx) => {
 		const parts = params.keys.toLowerCase().split("+");
 		const mods: Record<string, string> = {
-			cmd: "command down", command: "command down",
-			shift: "shift down", opt: "option down", option: "option down",
-			alt: "option down", ctrl: "control down", control: "control down",
+			cmd: "command down",
+			command: "command down",
+			shift: "shift down",
+			opt: "option down",
+			option: "option down",
+			alt: "option down",
+			ctrl: "control down",
+			control: "control down",
 		};
 		const modFlags = parts.filter((p) => mods[p]).map((p) => mods[p]);
 		const key = parts.filter((p) => !mods[p]);
@@ -352,14 +421,32 @@ export const clickMenuTool: ToolDefinition = defineTool({
 		const { app, path } = params;
 		if (path.length === 0) throw new Error("path required");
 		if (path.length === 1) {
-			return { content: [{ type: "text" as const, text: osa(`tell application "System Events" to tell process "${app}" to click menu bar item "${path[0]}" of menu bar 1`) }], details: undefined };
+			return {
+				content: [
+					{
+						type: "text" as const,
+						text: osa(
+							`tell application "System Events" to tell process "${app}" to click menu bar item "${path[0]}" of menu bar 1`,
+						),
+					},
+				],
+				details: undefined,
+			};
 		}
 		let ref = `menu item "${path[path.length - 1]}"`;
 		for (let i = path.length - 2; i > 0; i--) {
 			ref = `${ref} of menu "${path[i]}" of menu item "${path[i]}"`;
 		}
 		ref = `${ref} of menu "${path[0]}" of menu bar item "${path[0]}" of menu bar 1`;
-		return { content: [{ type: "text" as const, text: osa(`tell application "System Events" to tell process "${app}" to click ${ref}`) }], details: undefined };
+		return {
+			content: [
+				{
+					type: "text" as const,
+					text: osa(`tell application "System Events" to tell process "${app}" to click ${ref}`),
+				},
+			],
+			details: undefined,
+		};
 	},
 });
 
@@ -373,7 +460,15 @@ export const clickAtTool: ToolDefinition = defineTool({
 		y: Type.Integer({ description: "Y coordinate" }),
 	}),
 	execute: async (_toolCallId, params: { x: number; y: number }, _signal, _onUpdate, _ctx) => {
-		return { content: [{ type: "text" as const, text: osa(`tell application "System Events" to click at {${params.x}, ${params.y}}`) }], details: undefined };
+		return {
+			content: [
+				{
+					type: "text" as const,
+					text: osa(`tell application "System Events" to click at {${params.x}, ${params.y}}`),
+				},
+			],
+			details: undefined,
+		};
 	},
 });
 
@@ -383,7 +478,7 @@ export const clipboardGetTool: ToolDefinition = defineTool({
 	description: "Return current macOS clipboard text content.",
 	promptSnippet: "Get text from clipboard",
 	parameters: Type.Object({}),
-	execute: async (_toolCallId, _params: {}, _signal, _onUpdate, _ctx) => {
+	execute: async (_toolCallId, _params: Record<string, never>, _signal, _onUpdate, _ctx) => {
 		try {
 			const text = execSync("pbpaste", { encoding: "utf-8", timeout: 5000 });
 			return { content: [{ type: "text" as const, text: text || "(clipboard is empty)" }], details: undefined };
@@ -403,7 +498,10 @@ export const clipboardSetTool: ToolDefinition = defineTool({
 		try {
 			const proc = spawnSync("pbcopy", { input: params.text, encoding: "utf-8", timeout: 5000 });
 			if (proc.status !== 0) throw new Error(proc.stderr);
-			return { content: [{ type: "text" as const, text: `clipboard set (${params.text.length} chars)` }], details: undefined };
+			return {
+				content: [{ type: "text" as const, text: `clipboard set (${params.text.length} chars)` }],
+				details: undefined,
+			};
 		} catch (err: unknown) {
 			throw new Error(err instanceof Error ? err.message : String(err));
 		}
@@ -438,7 +536,10 @@ export const notifyTool: ToolDefinition = defineTool({
 	execute: async (_toolCallId, params: { title: string; message?: string }, _signal, _onUpdate, _ctx) => {
 		const title = params.title.replace(/"/g, '\\"');
 		const msg = (params.message || "").replace(/"/g, '\\"');
-		return { content: [{ type: "text" as const, text: osa(`display notification "${msg}" with title "${title}"`) }], details: undefined };
+		return {
+			content: [{ type: "text" as const, text: osa(`display notification "${msg}" with title "${title}"`) }],
+			details: undefined,
+		};
 	},
 });
 
@@ -446,7 +547,7 @@ export const speckTool: ToolDefinition = defineTool({
 	name: "speck",
 	label: "Speak Text Aloud (TTS)",
 	description:
-		"Speak text aloud using macOS Text-to-Speech (the \`say\` command). " +
+		"Speak text aloud using macOS Text-to-Speech (the `say` command). " +
 		"Use only for brief, human-style utterances — a few words, not a paragraph. " +
 		"Optional voice, optional rate (words/min, 0=default).",
 	promptSnippet: "Speak text aloud via macOS TTS (brief only)",
@@ -465,7 +566,11 @@ export const speckTool: ToolDefinition = defineTool({
 		if (params.rate && params.rate > 0) cmd.push("-r", String(params.rate));
 
 		try {
-			const proc = spawnSync(cmd[0], cmd.slice(1), { input: text, encoding: "utf-8", timeout: Math.min(600_000, Math.max(30_000, text.length * 50)) });
+			const proc = spawnSync(cmd[0], cmd.slice(1), {
+				input: text,
+				encoding: "utf-8",
+				timeout: Math.min(600_000, Math.max(30_000, text.length * 50)),
+			});
 			if (proc.status !== 0) throw new Error(proc.stderr?.trim() || "say failed");
 			return { content: [{ type: "text" as const, text: "spoke" }], details: undefined };
 		} catch (err: unknown) {
@@ -485,7 +590,11 @@ export const shortcutRunTool: ToolDefinition = defineTool({
 	}),
 	execute: async (_toolCallId, params: { name: string; inputText?: string }, _signal, _onUpdate, _ctx) => {
 		try {
-			const proc = spawnSync("shortcuts", ["run", params.name], { input: params.inputText ?? "", encoding: "utf-8", timeout: 120_000 });
+			const proc = spawnSync("shortcuts", ["run", params.name], {
+				input: params.inputText ?? "",
+				encoding: "utf-8",
+				timeout: 120_000,
+			});
 			const out = proc.stdout + (proc.stderr ? `\n[stderr]\n${proc.stderr}` : "");
 			return { content: [{ type: "text" as const, text: out.trim() || "OK" }], details: undefined };
 		} catch (err: unknown) {
@@ -501,7 +610,10 @@ export const macControlTool: ToolDefinition = defineTool({
 		"System controls. action ∈ {volume, mute, unmute, battery, wifi_on, wifi_off, sleep, lock, dark_mode, light_mode, toggle_dark}.",
 	promptSnippet: "Control macOS system settings",
 	parameters: Type.Object({
-		action: Type.String({ description: "Action: volume, mute, unmute, battery, wifi_on, wifi_off, sleep, lock, dark_mode, light_mode, toggle_dark" }),
+		action: Type.String({
+			description:
+				"Action: volume, mute, unmute, battery, wifi_on, wifi_off, sleep, lock, dark_mode, light_mode, toggle_dark",
+		}),
 		value: Type.Optional(Type.String({ description: "Optional value (e.g. volume level)" })),
 	}),
 	execute: async (_toolCallId, params: { action: string; value?: string }, _signal, _onUpdate, _ctx) => {
@@ -511,7 +623,7 @@ export const macControlTool: ToolDefinition = defineTool({
 
 		switch (a) {
 			case "volume":
-				result = osa(`set volume output volume ${parseInt(v) || 50}`);
+				result = osa(`set volume output volume ${parseInt(v, 10) || 50}`);
 				break;
 			case "mute":
 				result = osa("set volume with output muted");
@@ -522,22 +634,36 @@ export const macControlTool: ToolDefinition = defineTool({
 			case "battery": {
 				try {
 					result = execSync("pmset -g batt | tail -1", { encoding: "utf-8", timeout: 5000 }).trim();
-				} catch { result = "ERROR: could not read battery status"; }
+				} catch {
+					result = "ERROR: could not read battery status";
+				}
 				break;
 			}
 			case "wifi_on": {
-				try { execSync("networksetup -setairportpower en0 on", { timeout: 5000 }); result = "wifi on"; }
-				catch { result = "ERROR: could not enable wifi"; }
+				try {
+					execSync("networksetup -setairportpower en0 on", { timeout: 5000 });
+					result = "wifi on";
+				} catch {
+					result = "ERROR: could not enable wifi";
+				}
 				break;
 			}
 			case "wifi_off": {
-				try { execSync("networksetup -setairportpower en0 off", { timeout: 5000 }); result = "wifi off"; }
-				catch { result = "ERROR: could not disable wifi"; }
+				try {
+					execSync("networksetup -setairportpower en0 off", { timeout: 5000 });
+					result = "wifi off";
+				} catch {
+					result = "ERROR: could not disable wifi";
+				}
 				break;
 			}
 			case "sleep":
-				try { execSync("pmset sleepnow", { timeout: 3000 }); result = "sleeping"; }
-				catch { result = "ERROR: could not sleep"; }
+				try {
+					execSync("pmset sleepnow", { timeout: 3000 });
+					result = "sleeping";
+				} catch {
+					result = "ERROR: could not sleep";
+				}
 				break;
 			case "lock":
 				result = osa('tell application "System Events" to keystroke "q" using {control down, command down}');
@@ -549,7 +675,9 @@ export const macControlTool: ToolDefinition = defineTool({
 				result = osa('tell application "System Events" to tell appearance preferences to set dark mode to false');
 				break;
 			case "toggle_dark":
-				result = osa('tell application "System Events" to tell appearance preferences to set dark mode to not dark mode');
+				result = osa(
+					'tell application "System Events" to tell appearance preferences to set dark mode to not dark mode',
+				);
 				break;
 			default:
 				result = `ERROR: unknown action ${a}`;
@@ -560,9 +688,25 @@ export const macControlTool: ToolDefinition = defineTool({
 });
 
 export const macTools: ToolDefinition[] = [
-	launchAppTool, focusAppTool, quitAppTool, listAppsTool, frontmostAppTool,
-	applescriptTool, readUiTool, clickElementTool, waitTool, checkPermissionsTool,
-	typeTextTool, keyPressTool, clickMenuTool, clickAtTool,
-	clipboardGetTool, clipboardSetTool,
-	openUrlTool, notifyTool, speckTool, shortcutRunTool, macControlTool,
+	launchAppTool,
+	focusAppTool,
+	quitAppTool,
+	listAppsTool,
+	frontmostAppTool,
+	applescriptTool,
+	readUiTool,
+	clickElementTool,
+	waitTool,
+	checkPermissionsTool,
+	typeTextTool,
+	keyPressTool,
+	clickMenuTool,
+	clickAtTool,
+	clipboardGetTool,
+	clipboardSetTool,
+	openUrlTool,
+	notifyTool,
+	speckTool,
+	shortcutRunTool,
+	macControlTool,
 ];

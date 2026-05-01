@@ -42,8 +42,8 @@ import {
 	type Tool,
 	type ToolCall,
 	type ToolResultMessage,
-} from "@mariozechner/pi-ai";
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+} from "@prajwal/jarvis-ai";
+import type { ExtensionAPI } from "@prajwal/jarvis-coding-agent";
 
 // =============================================================================
 // OAuth Implementation (copied from packages/ai/src/utils/oauth/anthropic.ts)

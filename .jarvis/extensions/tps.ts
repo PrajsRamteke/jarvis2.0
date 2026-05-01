@@ -1,5 +1,5 @@
-import type { AssistantMessage } from "@mariozechner/pi-ai";
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { AssistantMessage } from "@prajwal/jarvis-ai";
+import type { ExtensionAPI } from "@prajwal/jarvis-coding-agent";
 
 function isAssistantMessage(message: unknown): message is AssistantMessage {
 	if (!message || typeof message !== "object") return false;

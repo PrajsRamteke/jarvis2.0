@@ -1,9 +1,9 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { AnthropicMessagesCompat, Api, Context, Model, OpenAICompletionsCompat } from "@mariozechner/pi-ai";
-import { getApiProvider } from "@mariozechner/pi-ai";
-import { getOAuthProvider } from "@mariozechner/pi-ai/oauth";
+import type { AnthropicMessagesCompat, Api, Context, Model, OpenAICompletionsCompat } from "@prajwal/jarvis-ai";
+import { getApiProvider } from "@prajwal/jarvis-ai";
+import { getOAuthProvider } from "@prajwal/jarvis-ai/oauth";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { AuthStorage } from "../src/core/auth-storage.js";
 import { clearApiKeyCache, ModelRegistry, type ProviderConfigInput } from "../src/core/model-registry.js";

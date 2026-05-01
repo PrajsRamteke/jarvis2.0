@@ -12,15 +12,32 @@ import { defineTool } from "../extensions/types.js";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-const IMAGE_EXTS = new Set([
-	".png", ".jpg", ".jpeg", ".heic", ".tif", ".tiff", ".bmp",
-]);
+const IMAGE_EXTS = new Set([".png", ".jpg", ".jpeg", ".heic", ".tif", ".tiff", ".bmp"]);
 
 const IMPORTANT_TEXT_HINTS = [
-	"aadhaar", "aadhar", "voter", "election", "identity", "identification",
-	"driving", "driver", "license", "licence", "passport", "pan", "ssn",
-	"social security", "date of birth", "dob", "government", "address",
-	"resume", "curriculum vitae", "experience", "education", "skills",
+	"aadhaar",
+	"aadhar",
+	"voter",
+	"election",
+	"identity",
+	"identification",
+	"driving",
+	"driver",
+	"license",
+	"licence",
+	"passport",
+	"pan",
+	"ssn",
+	"social security",
+	"date of birth",
+	"dob",
+	"government",
+	"address",
+	"resume",
+	"curriculum vitae",
+	"experience",
+	"education",
+	"skills",
 ];
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -96,7 +113,7 @@ export const readImageTextTool: ToolDefinition<typeof readImageTextSchema> = def
 		"Supports PNG, JPG, JPEG, HEIC, TIFF, BMP. Returns extracted text or error message.",
 	promptSnippet: "Extract text from a single image using macOS Vision OCR",
 	parameters: readImageTextSchema,
-	execute: async (toolCallId, params, _signal, _onUpdate, _ctx) => {
+	execute: async (_toolCallId, params, _signal, _onUpdate, _ctx) => {
 		const text = ocrImage(params.path);
 		if (text.startsWith("ERROR:")) {
 			throw new Error(text);
@@ -131,7 +148,7 @@ export const readImagesTextTool: ToolDefinition<typeof readImagesTextSchema> = d
 		"when keywords are provided (e.g., passport, license, resume).",
 	promptSnippet: "Batch OCR multiple images with relevance ranking",
 	parameters: readImagesTextSchema,
-	execute: async (toolCallId, params, _signal, _onUpdate, _ctx) => {
+	execute: async (_toolCallId, params, _signal, _onUpdate, _ctx) => {
 		const maxFiles = Math.min(params.maxFiles ?? 80, 500);
 		const maxChars = params.maxCharsPerImage ?? 800;
 		const includeEmpty = params.includeEmpty ?? false;
@@ -161,7 +178,12 @@ export const readImagesTextTool: ToolDefinition<typeof readImagesTextSchema> = d
 		}
 
 		if (images.length === 0) {
-			return { content: [{ type: "text" as const, text: "No image files found. Supported: PNG, JPG, JPEG, HEIC, TIFF, BMP." }], details: undefined };
+			return {
+				content: [
+					{ type: "text" as const, text: "No image files found. Supported: PNG, JPG, JPEG, HEIC, TIFF, BMP." },
+				],
+				details: undefined,
+			};
 		}
 
 		const rows: { path: string; text: string; score: number; index: number }[] = [];
@@ -180,7 +202,7 @@ export const readImagesTextTool: ToolDefinition<typeof readImagesTextSchema> = d
 			const displayPath = relative(cwd, imgPath) || imgPath;
 			let preview = clean;
 			if (preview.length > maxChars) {
-				preview = preview.slice(0, maxChars - 20).trimEnd() + "...";
+				preview = `${preview.slice(0, maxChars - 20).trimEnd()}...`;
 			}
 			const label = score > 0 ? "LIKELY IMPORTANT" : "TEXT";
 			rows.push({
@@ -200,7 +222,8 @@ export const readImagesTextTool: ToolDefinition<typeof readImagesTextSchema> = d
 			(important > 0 ? ` Prioritized ${important} likely important result(s).` : "") +
 			(skipped > 0 ? ` Suppressed ${skipped} empty/no-text result(s).` : "");
 
-		const body = rows.length > 0 ? "\n\n" + rows.map((r) => r.text).join("\n\n") : "\nNo text detected in scanned images.";
+		const body =
+			rows.length > 0 ? `\n\n${rows.map((r) => r.text).join("\n\n")}` : "\nNo text detected in scanned images.";
 
 		return { content: [{ type: "text" as const, text: header + body }], details: undefined };
 	},
